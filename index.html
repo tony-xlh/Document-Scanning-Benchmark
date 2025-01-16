@@ -4,6 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document Scanning Benchmark</title>
   <script src="https://cdn.jsdelivr.net/npm/dynamsoft-capture-vision-bundle@2.6.1000/dist/dcv.bundle.js"></script>
+  <script src="utils.js"></script>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -117,10 +118,43 @@
         const result = await router.capture(file, "DetectDocumentBoundaries_Default");
         if (result.detectedQuadResultItems) {
           detectionResults.push(result.detectedQuadResultItems[0]);
+        }else{
+          detectionResults.push(undefined);
         }
         console.log(result);
       }
       updateStatus("Done");
+      updateDetectionResultInTable();
+    }
+
+    async function updateDetectionResultInTable(){
+      let table = document.querySelector("#resultTable table");
+      for (let i = 0; i < detectionResults.length; i++){
+        let result = detectionResults[i];
+        let row = table.rows[i+1];
+        let filenameCell = row.cells[1];
+        let filename = filenameCell.innerHTML;
+        let detectedCell = row.cells[2];
+        let correct = await isDetectionCorrect(filename, i)
+        detectedCell.innerHTML = correct ? "Yes" : "No";
+      }
+    }
+
+    async function isDetectionCorrect(filename, index){
+      if (!detectionResults[index]) {
+        return false;
+      }
+      let annotation = await getAnnotationByFilename(filename);
+      let result = parseAnnotation(annotation);
+      console.log(result);
+      console.log(detectionResults[index]);
+      let iou = intersectionOverUnion(result.points, detectionResults[index].location.points);
+      console.log(iou);
+      if (iou>0.8) {
+        return true;
+      }else{
+        return false;
+      }
     }
 
     function readExistingBenchmarkResult(){
@@ -182,7 +216,20 @@
       })
     }
 
-    async function displayAnnotation(filename){
+    //x1,y1 x2,y2 x3,y3 x4,y4 -> {points:[{x:x1,y:y1},{x:x2,y:y2},{x:x3,y:y3},{x:x4,y:y4}]}
+    function parseAnnotation(annotation){
+      let result = {points:[]};
+      let points = annotation.split(" ");
+      for (let index = 0; index < points.length; index++) {
+        const point = points[index];
+        const x = point.split(",")[0];
+        const y = point.split(",")[1];
+        result.points.push({x:x,y:y})
+      }
+      return result;
+    }
+
+    async function getAnnotationByFilename(filename){
       let annotation = "";
       let files = document.getElementById("fileInput").files;
       for (let index = 0; index < files.length; index++) {
@@ -192,14 +239,19 @@
           break;
         }
       }
+      return annotation;
+    }
+
+    async function displayAnnotation(filename){
+      let annotation = await getAnnotationByFilename(filename);
       if (annotation) {
+        let result = parseAnnotation(annotation);
         let polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
         let pointsAttr = "";
-        let points = annotation.split(" ");
-        for (let index = 0; index < points.length; index++) {
-          const point = points[index];
-          const x = point.split(",")[0];
-          const y = point.split(",")[1];
+        for (let index = 0; index < result.points.length; index++) {
+          const point = result.points[index];
+          const x = point.x;
+          const y = point.y;
           pointsAttr = pointsAttr + x + "," + y + " ";
         }
         polygon.setAttribute("class","groundtruth");
