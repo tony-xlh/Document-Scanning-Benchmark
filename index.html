@@ -33,6 +33,16 @@
 
     .right-container {
       flex-basis: 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .image-container {
+      max-height: 80vh;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
     }
 </style>
 </head>
@@ -55,7 +65,9 @@
         </div>
       </div>
       <div class="right-container">
-        <img alt="placeholder"/>
+        <div class="image-container">
+          <svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="imageSVG"></svg>
+        </div>
       </div>
     </div>
   </div>
@@ -94,7 +106,7 @@
         let row = body.insertRow();
         row.className = "fileRow";
         row.addEventListener('click', function(){
-          toggleSelected(row);
+          toggleSelected(row,file);
         });
         let numberCell = row.insertCell();
         numberCell.innerHTML = number;
@@ -105,12 +117,53 @@
       document.getElementById("resultTable").appendChild(table);
     }
 
-    function toggleSelected(row) {
+    function toggleSelected(row,file) {
       let rows = document.getElementsByClassName("fileRow");
       for (let i = 0; i < rows.length; i++){
         rows[i].classList.remove("selected");
       }
       row.classList.add("selected");
+      displayImage(file);
+    }
+
+    function displayImage(file){
+      readFileAsBlob(file).then((blob) => {
+        let url = URL.createObjectURL(new Blob([blob]));
+        let img = new Image();
+        img.src = url;
+        img.onload = function(){
+          let svg = document.querySelector('.imageSVG');
+          svg.innerHTML = "";
+          svg.setAttribute("viewBox", getViewBox(img));
+          let svgImg = document.createElementNS("http://www.w3.org/2000/svg", "image");
+          svgImg.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
+          svg.appendChild(svgImg);
+        }
+      })
+    }
+
+    function getViewBox(img){
+      return "0 0 " + img.naturalWidth + " " + img.naturalHeight;
+    }
+
+    function readFileAsText(file){
+      return new Promise((resolve, reject) => {
+        let reader = new FileReader();
+        reader.onload = function(e){
+          resolve(e.target.result);
+        }
+        reader.readAsText(file);
+      })
+    }
+
+    function readFileAsBlob(file){
+      return new Promise((resolve, reject) => {
+        let reader = new FileReader();
+        reader.onload = function(e){
+          resolve(e.target.result);
+        }
+        reader.readAsArrayBuffer(file);
+      })
     }
   </script>
 </body>
