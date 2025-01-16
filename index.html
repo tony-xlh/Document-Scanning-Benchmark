@@ -47,9 +47,15 @@
       overflow: auto;
     }
 
+    .detection {
+      fill: rgba(0, 255, 0, 0.3);
+      stroke: green;
+      stroke-width: 20px;
+    }
+
     .groundtruth {
       fill: rgba(0, 255, 0, 0.1);
-      stroke: green;
+      stroke: lightgreen;
       stroke-width: 20px;
     }
 </style>
@@ -196,24 +202,43 @@
         rows[i].classList.remove("selected");
       }
       row.classList.add("selected");
-      displayImage(file);
+      displayImage(file,parseInt(row.cells[0].innerText) - 1);
     }
 
-    function displayImage(file){
+    function displayImage(file,rowIndex){
       readFileAsBlob(file).then((blob) => {
         let url = URL.createObjectURL(new Blob([blob]));
         let img = new Image();
         img.src = url;
-        img.onload = function(){
+        img.onload = async function(){
           let svg = document.querySelector('.imageSVG');
           svg.innerHTML = "";
           svg.setAttribute("viewBox", getViewBox(img));
           let svgImg = document.createElementNS("http://www.w3.org/2000/svg", "image");
           svgImg.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
           svg.appendChild(svgImg);
-          displayAnnotation(file.name);
+          await displayAnnotation(file.name);
+          displayDetectionResult(rowIndex);
         }
       })
+    }
+
+    function displayDetectionResult(index){
+      let result = detectionResults[index];
+      if (result) {
+        let polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        let pointsAttr = "";
+        for (let index = 0; index < result.location.points.length; index++) {
+          const point = result.location.points[index];
+          const x = point.x;
+          const y = point.y;
+          pointsAttr = pointsAttr + x + "," + y + " ";
+        }
+        polygon.setAttribute("class","detection");
+        polygon.setAttribute("points", pointsAttr.trim());
+        let svg = document.querySelector('.imageSVG');
+        svg.appendChild(polygon);
+      }
     }
 
     //x1,y1 x2,y2 x3,y3 x4,y4 -> {points:[{x:x1,y:y1},{x:x2,y:y2},{x:x3,y:y3},{x:x4,y:y4}]}
