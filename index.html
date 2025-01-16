@@ -12,6 +12,10 @@
       overflow: auto;
     }
 
+    #resultTable {
+      padding: 10px 0px;
+    }
+
     .fileRow {
       cursor: pointer;
     }
@@ -76,6 +80,7 @@
         <span id="status"></span>
         <div class="result">
           <h3>Result:</h3>
+          <div>Detection Rate: <span id="detectionRate"></span></div>
           <div id="resultTable"></div>
         </div>
       </div>
@@ -130,7 +135,25 @@
         console.log(result);
       }
       updateStatus("Done");
-      updateDetectionResultInTable();
+      await updateDetectionResultInTable();
+      calculateScore();
+    }
+
+    function calculateScore(){
+      let table = document.querySelector("#resultTable table");
+      let correctNumber = 0;
+      for (let i = 0; i < detectionResults.length; i++){
+        let result = detectionResults[i];
+        let row = table.rows[i+1];
+        let filenameCell = row.cells[1];
+        let filename = filenameCell.innerHTML;
+        let detectedCell = row.cells[2];
+        if (detectedCell.innerHTML === "Yes") {
+          correctNumber = correctNumber + 1;
+        };
+      }
+      let rate = correctNumber/detectionResults.length;
+      document.getElementById("detectionRate").innerText = rate;
     }
 
     async function updateDetectionResultInTable(){
