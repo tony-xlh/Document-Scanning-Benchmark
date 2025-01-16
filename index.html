@@ -44,6 +44,12 @@
       height: 100%;
       overflow: auto;
     }
+
+    .groundtruth {
+      fill: rgba(0, 255, 0, 0.1);
+      stroke: green;
+      stroke-width: 20px;
+    }
 </style>
 </head>
 <html>
@@ -138,9 +144,38 @@
           let svgImg = document.createElementNS("http://www.w3.org/2000/svg", "image");
           svgImg.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
           svg.appendChild(svgImg);
+          displayAnnotation(file.name);
         }
       })
     }
+
+    async function displayAnnotation(filename){
+      let annotation = "";
+      let files = document.getElementById("fileInput").files;
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
+        if (file.name === filename + ".txt") {
+          annotation = await readFileAsText(file);
+          break;
+        }
+      }
+      if (annotation) {
+        let polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        let pointsAttr = "";
+        let points = annotation.split(" ");
+        for (let index = 0; index < points.length; index++) {
+          const point = points[index];
+          const x = point.split(",")[0];
+          const y = point.split(",")[1];
+          pointsAttr = pointsAttr + x + "," + y + " ";
+        }
+        polygon.setAttribute("class","groundtruth");
+        polygon.setAttribute("points", pointsAttr.trim());
+        let svg = document.querySelector('.imageSVG');
+        svg.appendChild(polygon);
+      }
+    }
+
 
     function getViewBox(img){
       return "0 0 " + img.naturalWidth + " " + img.naturalHeight;
