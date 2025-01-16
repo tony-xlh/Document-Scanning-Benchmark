@@ -9,6 +9,18 @@
       text-align: center;
       overflow: auto;
     }
+
+    .fileRow {
+      cursor: pointer;
+    }
+
+    .fileRow:hover {
+      background-color: #f5f5f5;
+    }
+
+    .fileRow.selected {
+      background-color: #f0f0f0;
+    }
 </style>
 </head>
 <html>
@@ -60,6 +72,10 @@
         }
         number = number + 1;
         let row = body.insertRow();
+        row.className = "fileRow";
+        row.addEventListener('click', function(){
+          toggleSelected(row);
+        });
         let numberCell = row.insertCell();
         numberCell.innerHTML = number;
         let filenameCell = row.insertCell();
@@ -67,6 +83,14 @@
         let detectedCell = row.insertCell();
       }
       document.getElementById("resultTable").appendChild(table);
+    }
+
+    function toggleSelected(row) {
+      let rows = document.getElementsByClassName("fileRow");
+      for (let i = 0; i < rows.length; i++){
+        rows[i].classList.remove("selected");
+      }
+      row.classList.add("selected");
     }
   </script>
 </body>
