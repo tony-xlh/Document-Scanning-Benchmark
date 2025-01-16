@@ -3,6 +3,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document Scanning Benchmark</title>
+  <script src="https://cdn.jsdelivr.net/npm/dynamsoft-capture-vision-bundle@2.6.1000/dist/dcv.bundle.js"></script>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -65,6 +66,7 @@
         </br>
         <button id="startButton">Start Benchmark</button>
         <button id="readExistingButton">Read Existing Benchmark Result</button>
+        <span id="status"></span>
         <div class="result">
           <h3>Result:</h3>
           <div id="resultTable"></div>
@@ -78,7 +80,9 @@
     </div>
   </div>
   <script>
+    init();
     registerEvents();
+    let detectionResults = [];
 
     function registerEvents(){
       document.getElementById('fileInput').addEventListener('change', listDataset);
@@ -86,8 +90,37 @@
       document.getElementById('readExistingButton').addEventListener('click', readExistingBenchmarkResult);
     }
 
-    function startBenchmark(){
+    async function init(){
+      updateStatus("Initilizing...");
+      await Dynamsoft.Core.CoreModule.loadWasm(["DDN"]);
+      await Dynamsoft.License.LicenseManager.initLicense("DLS2eyJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSJ9",true);
+      router = await Dynamsoft.CVR.CaptureVisionRouter.createInstance();
+      updateStatus("Ready");
+    }
 
+    function updateStatus(status){
+      document.getElementById("status").innerText = status;
+    }
+
+    async function startBenchmark(){
+      detectionResults = [];
+      let files = document.getElementById("fileInput").files;
+      let number = 0;
+      for (let i = 0; i < files.length; i++){
+        let file = files[i];
+        if (file.name.indexOf(".txt") != -1){
+          continue;
+        }
+        number = number + 1;
+        updateStatus("Processing: " + number + "/" + files.length/2);
+        router.maxImageSideLength = 99999;
+        const result = await router.capture(file, "DetectDocumentBoundaries_Default");
+        if (result.detectedQuadResultItems) {
+          detectionResults.push(result.detectedQuadResultItems[0]);
+        }
+        console.log(result);
+      }
+      updateStatus("Done");
     }
 
     function readExistingBenchmarkResult(){
