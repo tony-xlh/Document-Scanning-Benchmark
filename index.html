@@ -189,7 +189,20 @@
     }
 
     function importResult(){
-
+      let input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json";
+      input.onchange = function(){
+        let file = input.files[0];
+        let reader = new FileReader();
+        reader.onload = function(e){
+          detectionResults = JSON.parse(e.target.result);
+          updateDetectionResultInTable();
+          calculateScore();
+        }
+        reader.readAsText(file);
+      }
+      input.click();
     }
 
     function exportResult(){
