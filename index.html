@@ -13,7 +13,13 @@
     }
 
     #resultTable {
-      padding: 10px 0px;
+      margin: 10px 0px;
+      max-height: 50vh;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
     }
 
     .fileRow {
@@ -31,6 +37,7 @@
     .content {
       display: flex;
       flex-wrap: wrap;
+      gap: 20px;
     }
 
     .left-container {
@@ -38,7 +45,7 @@
     }
 
     .right-container {
-      flex-basis: 40%;
+      flex-basis: calc(40% - 20px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -76,13 +83,14 @@
         </label>
         </br>
         <button id="startButton">Start Benchmark</button>
-        <button id="readExistingButton">Read Existing Benchmark Result</button>
         <span id="status"></span>
         <div class="result">
           <h3>Result:</h3>
           <div>Detection Rate: <span id="detectionRate"></span></div>
           <div id="resultTable"></div>
         </div>
+        <button id="importButton">Import Detection Results</button>
+        <button id="exportButton">Export Detection Results</button>
       </div>
       <div class="right-container">
         <div class="image-container">
@@ -99,7 +107,8 @@
     function registerEvents(){
       document.getElementById('fileInput').addEventListener('change', listDataset);
       document.getElementById('startButton').addEventListener('click', startBenchmark);
-      document.getElementById('readExistingButton').addEventListener('click', readExistingBenchmarkResult);
+      document.getElementById('importButton').addEventListener('click', importResult);
+      document.getElementById('exportButton').addEventListener('click', exportResult);
     }
 
     async function init(){
@@ -130,7 +139,7 @@
         if (result.detectedQuadResultItems) {
           detectionResults.push(result.detectedQuadResultItems[0]);
         }else{
-          detectionResults.push(undefined);
+          detectionResults.push(null);
         }
         console.log(result);
       }
@@ -186,11 +195,35 @@
       }
     }
 
-    function readExistingBenchmarkResult(){
+    function importResult(){
+      let input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json";
+      input.onchange = function(){
+        let file = input.files[0];
+        let reader = new FileReader();
+        reader.onload = function(e){
+          detectionResults = JSON.parse(e.target.result);
+          updateDetectionResultInTable();
+          calculateScore();
+        }
+        reader.readAsText(file);
+      }
+      input.click();
+    }
 
+    function exportResult(){
+      let str = JSON.stringify(detectionResults);
+      let blob = new Blob([str], {type: "text/plain"});
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement("a");
+      a.href = url;
+      a.download = "result.json";
+      a.click();
     }
 
     function listDataset(){
+      detectionResults = [];
       document.getElementById("resultTable").innerHTML = "";
       let table = document.createElement("table");
       let head = table.createTHead();
