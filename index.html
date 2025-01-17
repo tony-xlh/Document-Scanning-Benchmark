@@ -76,13 +76,14 @@
         </label>
         </br>
         <button id="startButton">Start Benchmark</button>
-        <button id="readExistingButton">Read Existing Benchmark Result</button>
         <span id="status"></span>
         <div class="result">
           <h3>Result:</h3>
           <div>Detection Rate: <span id="detectionRate"></span></div>
           <div id="resultTable"></div>
         </div>
+        <button id="importButton">Import Result</button>
+        <button id="exportButton">Export Result</button>
       </div>
       <div class="right-container">
         <div class="image-container">
@@ -99,7 +100,8 @@
     function registerEvents(){
       document.getElementById('fileInput').addEventListener('change', listDataset);
       document.getElementById('startButton').addEventListener('click', startBenchmark);
-      document.getElementById('readExistingButton').addEventListener('click', readExistingBenchmarkResult);
+      document.getElementById('importButton').addEventListener('click', importResult);
+      document.getElementById('exportButton').addEventListener('click', exportResult);
     }
 
     async function init(){
@@ -186,8 +188,18 @@
       }
     }
 
-    function readExistingBenchmarkResult(){
+    function importResult(){
 
+    }
+
+    function exportResult(){
+      let str = JSON.stringify(detectionResults);
+      let blob = new Blob([str], {type: "text/plain"});
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement("a");
+      a.href = url;
+      a.download = "result.json";
+      a.click();
     }
 
     function listDataset(){
